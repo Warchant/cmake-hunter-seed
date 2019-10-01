@@ -9,6 +9,7 @@ services:
     image: warchantua/dev-essential
     tty: true
     stdin_open: true
+    working_directory: app
     volumes:
       - .:/app:rw
     environment:

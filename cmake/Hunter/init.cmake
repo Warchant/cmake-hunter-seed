@@ -10,19 +10,19 @@ if (NOT password_is_empty AND NOT username_is_empty)
 endif ()
 
 set(
-    HUNTER_PASSWORDS_PATH
-    "${CMAKE_CURRENT_LIST_DIR}/passwords.cmake"
-    CACHE
-    FILEPATH
-    "Hunter passwords"
+  HUNTER_PASSWORDS_PATH
+  "${CMAKE_CURRENT_LIST_DIR}/passwords.cmake"
+  CACHE
+  FILEPATH
+  "Hunter passwords"
 )
 
 set(
-    HUNTER_CACHE_SERVERS
-    "https://github.com/soramitsu/hunter-binary-cache;https://github.com/Warchant/hunter-binary-cache;https://github.com/elucideye/hunter-cache;https://github.com/ingenue/hunter-cache"
-    CACHE
-    STRING
-    "Binary cache server"
+  HUNTER_CACHE_SERVERS
+  "https://github.com/soramitsu/hunter-binary-cache"
+  CACHE
+  STRING
+  "Binary cache server"
 )
 
 

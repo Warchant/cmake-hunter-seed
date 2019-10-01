@@ -6,10 +6,20 @@ if(CCACHE_FOUND)
   set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ccache)
 endif(CCACHE_FOUND)
 
-include("cmake/3rdparty/Hunter/init.cmake")
+
+set(
+    CMAKE_TOOLCHAIN_FILE
+    "${CMAKE_SOURCE_DIR}/cmake/toolchain/cxx17.cmake"
+    CACHE
+    FILEPATH
+    "Default toolchain"
+)
+
+
+include("cmake/Hunter/init.cmake")
 HunterGate(
-    URL "https://github.com/ruslo/hunter/archive/v0.23.165.tar.gz"
-    SHA1 "5a73f91df5f6109c0bb1104d0c0ee423f7bece79"
+    URL "https://github.com/cpp-pm/hunter/archive/v0.23.217.tar.gz"
+    SHA1 "4b36c0f8ffc8f3b5718d5e24629fb40c56c99b13"
 )
 
 project(cmake_hunter_seed)
@@ -25,13 +35,24 @@ endif()
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 include(CheckCXXCompilerFlag)
+include(cmake/toolchain-util.cmake)
 include(cmake/dependencies.cmake)
 include(cmake/functions.cmake)
 
+print("C flags: ${CMAKE_C_FLAGS}")
+print("CXX flags: ${CMAKE_CXX_FLAGS}")
+print("Using CMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}")
 
+option(TESTING      "Build tests"                                 ON )
+option(CLANG_FORMAT "Enable clang-format target"                  ON )
 option(CLANG_TIDY   "Enable clang-tidy checks during compilation" OFF)
 option(COVERAGE     "Enable generation of coverage info"          OFF)
-
+# sanitizers will be enabled only for Kagome, and will be disabled for dependencies
+option(ASAN         "Enable address sanitizer"                    OFF)
+option(LSAN         "Enable leak sanitizer"                       OFF)
+option(MSAN         "Enable memory sanitizer"                     OFF)
+option(TSAN         "Enable thread sanitizer"                     OFF)
+option(UBSAN        "Enable UB sanitizer"                         OFF)
 
 
 ## setup compilation flags
@@ -47,6 +68,7 @@ if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "^(AppleClang|Clang|GNU)$")
   add_flag(-Wnull-dereference)       # (only in GCC >= 6.0) warn if a null dereference is detected
   add_flag(-Wdouble-promotion)       # (GCC >= 4.6, Clang >= 3.8) warn if float is implicit promoted to double
   add_flag(-Wsign-compare)
+  add_flag(-Wtype-limits)            # size_t - size_t >= 0 -> always true
 
   # disable those flags
   add_flag(-Wno-unused-command-line-argument)    # clang: warning: argument unused during compilation: '--coverage' [-Wunused-command-line-argument]
@@ -58,7 +80,6 @@ if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "^(AppleClang|Clang|GNU)$")
   add_flag(-Werror-unused-lambda-capture)  # error if lambda capture is unused
   add_flag(-Werror-return-type)      # warning: control reaches end of non-void function [-Wreturn-type]
   add_flag(-Werror-non-virtual-dtor) # warn the user if a class with virtual functions has a non-virtual destructor. This helps catch hard to track down memory errors
-
   add_flag(-Werror-sign-compare)     # warn the user if they compare a signed and unsigned numbers
   add_flag(-Werror-reorder)          # field '$1' will be initialized after field '$2'
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
@@ -72,10 +93,16 @@ endif()
 if(CLANG_TIDY)
   include(cmake/clang-tidy.cmake)
 endif()
+if(CLANG_FORMAT)
+  include(cmake/clang-format.cmake)
+endif()
 
 
 
+add_subdirectory(src)
 
-add_executable(cmake_hunter_seed
-    main.cpp
-    )
+
+if(TESTING)
+  enable_testing()
+  add_subdirectory(test)
+endif()
